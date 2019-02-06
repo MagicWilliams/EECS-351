@@ -1,0 +1,21 @@
+* {
+  font-family: Helvetica;
+  font-weight: bold;
+  color: #ededed;
+}
+
+body {
+  height: 97vh;
+  background: #15CCFF;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+h3 {
+  position: absolute;
+  top: 10px;
+  left: 40px;
+  color: white;
+}

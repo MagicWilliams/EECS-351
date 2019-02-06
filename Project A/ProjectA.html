@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Satellite vs Anti-Aircraft</title>
+    <link rel="stylesheet" type="text/css" href="styles.css">.
+  </head>
+
+  <body onload="main()">
+    <h3 id="speed"> lol </h3>
+
+    <canvas id="webgl" width="800" height="800">
+    Please use a browser that supports "canvas"
+    </canvas>
+
+    <script src="../lib/webgl-utils.js"></script>
+    <script src="../lib/webgl-debug.js"></script>
+    <script src="lib1.js"></script> <! to simplify drawing colorful triangles in 3D>
+    <script src="../lib/cuon-utils.js"></script>
+    <script src="../lib/cuon-matrix-quat03.js"></script>
+    <script src="ProjectA.js"></script>
+    <script type="text/javascript" src="build/dat.gui.js"></script>
+ <script type="text/javascript">
+   var obj = {
+       message: 'David - Satellite vs Anti-Aircraft',
+
+       showInstructions: function () {
+         alert('Thanks for checking this out! To modify the speed, you can use the drop down below, or you can use the left and right arrow keys. You can also click on the canvas to reset to 100% speed, and you can view in slow-motion by holding the click. Go ahead and give it a try!');
+       },
+
+       speed: 3,
+
+       color0: [ 255, 173, 215 ], // RGB array - Killa Cam Pink
+       color1: [ 93, 238, 187 ], // RGB array - IceCream15
+       color2: [ 16, 192, 255 ], // RGB array -  CO**BLUE
+       color3: [ 255, 153, 54, 1.0 ], // RGB with alpha - Fanta
+   };
+
+   var gui = new dat.gui.GUI();
+
+   gui.remember(obj);
+
+   gui.add(obj, 'message');
+   gui.add(obj, 'showInstructions');
+
+   // Choose from named values
+   gui.add(obj, 'speed', { Stopped: 0, SuperSlow: .25, KindaAlmostRegular:.8, Normal: 1, Fast: 3 } );
+
+   var f1 = gui.addFolder('Colors');
+   f1.addColor(obj, 'color0');
+   f1.addColor(obj, 'color1');
+   f1.addColor(obj, 'color2');
+   f1.addColor(obj, 'color3');
+
+ </script>
+
+  </body>
+</html>
