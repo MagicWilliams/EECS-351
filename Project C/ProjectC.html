@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Project C</title>
+    <link rel="stylesheet" type="text/css" href="styles.css">.
+  </head>
+
+  <body onload="main()">
+    <div>
+      <h3 id="speed"> Project C <br> "#MidtermSzn: An Interactive Work"<br> David Latimore </h3>
+      <p id="lMode">Light Mode: 1</p>
+    </div>
+
+    <canvas id="webgl" width="800" height="800">
+    It's 2018 how are you even using a browser that doesn't support canvas LMAOOOOO
+    </canvas>
+
+    <p>To move the camera in space, us the W, A, S, and D keys. To turn and tilt the camera, use the up, down, left, and right arrows.
+    You can also turn off the headlight by pressing the spacebar, and you can turn the global light off by pressing the G key.
+    Switch to one of four lighting modes by pressing any of the number keys 1-4.</p>
+
+    <p> Edit the light using the input fields below!</p>
+
+    <div id="Inputs">
+        <div class="input-group">
+          <h3> Ambient Light </h3>
+            <p> R: </p> <input type="text" id="AR" value="0.5"/>
+            <p> G: </p> <input type="text" id="AG" value="0.5"/>
+            <p> B: </p> <input type="text" id="AB" value="0.5"/>
+        </div>
+        <div class="input-group">
+          <h3> Diffuse Light</h3>
+            <p> R: </p> <input type="text" id="DR" value="0.2"/>
+            <p> G: </p> <input type="text" id="DG" value="0.6"/>
+            <p> B: </p> <input type="text" id="DB" value="0.7"/>
+        </div>
+        <div class="input-group">
+          <h3> Specular Light </h3>
+            <p> R: </p> <input type="text" id="SR" value="1.0"/>
+            <p> G: </p> <input type="text" id="SG" value="0.8"/>
+            <p> B: </p> <input type="text" id="SB" value="1.0"/>
+        </div>
+        <div class="input-group">
+          <h3> Position </h3>
+            <p> X: </p> <input type="text" id="PX" value="-2.0"/>
+            <p> Y: </p> <input type="text" id="PY" value="2.0"/>
+            <p> Z: </p> <input type="text" id="PZ" value="5.0"/>
+        </div>
+    </div>
+
+
+
+    <script src="webgl-utils.js"></script>
+    <script src="webgl-debug.js"></script>
+    <script src="lib1.js"></script>
+    <script src="lights-JT.js"></script>
+    <script src="materials_Ayerdi.js"></script>
+    <script src="cuon-utils.js"></script>
+    <script src="cuon-matrix-quat03.js"></script>
+    <script src="ProjectC.js"></script>
+    <script type="text/javascript" src="build/dat.gui.js"></script>
+  </body>
+</html>
