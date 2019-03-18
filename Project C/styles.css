@@ -1,5 +1,15 @@
+@font-face {
+  font-family: inconsolata;
+  src: url(Inconsolata-Regular.ttf);
+}
+
+@font-face {
+  font-family: inconsolata-bold;
+  src: url(Inconsolata-Bold.ttf);
+}
+
 * {
-  font-family: Helvetica;
+  font-family: inconsolata;
   font-weight: bold;
 }
 
@@ -11,6 +21,15 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+}
+
+#instr {
+  width: 60%;
+  margin: 15px auto;
+}
+
+#prompt {
+  margin-bottom: 25px;
 }
 
 div {
@@ -30,8 +49,7 @@ h3 {
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  height: 200px;
-  background:  red;
+  margin-bottom: 75px;
 }
 
 .input-group input {
@@ -44,4 +62,8 @@ h3 {
       border: none;
       background: transparent;
       border-bottom: 1px solid #222;
+}
+
+.input-group h5 {
+  margin-top: 0px;
 }

@@ -16,36 +16,64 @@
     It's 2018 how are you even using a browser that doesn't support canvas LMAOOOOO
     </canvas>
 
-    <p>To move the camera in space, us the W, A, S, and D keys. To turn and tilt the camera, use the up, down, left, and right arrows.
-    You can also turn off the headlight by pressing the spacebar, and you can turn the global light off by pressing the G key.
-    Switch to one of four lighting modes by pressing any of the number keys 1-4.</p>
+    <p id='instr'>To move the camera in space, us the W, A, S, and D keys. To turn and tilt the camera, use the I, J, K, and L keys.
+    You can also turn off the headlight by pressing the H key, and you can turn the global light off by pressing the G key.
+    Finally, you can cycle through the four light modes using the left/right arrow keys.</p>
 
-    <p> Edit the light using the input fields below!</p>
+    <p id='prompt'> Edit the light using the input fields below!</p>
 
     <div id="Inputs">
         <div class="input-group">
-          <h3> Ambient Light </h3>
-            <p> R: </p> <input type="text" id="AR" value="0.5"/>
-            <p> G: </p> <input type="text" id="AG" value="0.5"/>
-            <p> B: </p> <input type="text" id="AB" value="0.5"/>
+
+            <input type="range" id="AR" name="ambientRed" min="0" max="1" step='.01' value='.5' />
+            <h5> Ambient Red</h5>
+
+            <input type="range" id="AG" name="ambientGreen" min="0" max="1" step='.01' value='.5' />
+            <h5> Ambient Green</h5>
+
+            <input type="range" id="AB" name="ambientBlue" min="0" max="1" step='.01' value='.5' />
+            <h5> Ambient Blue</h5>
+
         </div>
+
+
         <div class="input-group">
-          <h3> Diffuse Light</h3>
-            <p> R: </p> <input type="text" id="DR" value="0.2"/>
-            <p> G: </p> <input type="text" id="DG" value="0.6"/>
-            <p> B: </p> <input type="text" id="DB" value="0.7"/>
+
+            <input type="range" id="DR" name="Diffuse Red" min="0" max="1" step='.01' value='.5' />
+          <h5> Diffuse Red</h5>
+
+            <input type="range" id="DG" name="Diffuse Green" min="0" max="1" step='.01' value='.5' />
+            <h5> Diffuse Green</h5>
+
+            <input type="range" id="DB" name="Diffuse Blue" min="0" max="1" step='.01' value='.5' />
+            <h5> Diffuse Blue</h5>
+
         </div>
+
         <div class="input-group">
-          <h3> Specular Light </h3>
-            <p> R: </p> <input type="text" id="SR" value="1.0"/>
-            <p> G: </p> <input type="text" id="SG" value="0.8"/>
-            <p> B: </p> <input type="text" id="SB" value="1.0"/>
+
+            <input type="range" id="SR" name="specRed" min="0" max="1" step='.01' value='.5' />
+          <h5> Specular Red</h5>
+
+            <input type="range" id="SG" name="SpecularGreen" min="0" max="1" step='.01' value='.5' />
+            <h5> Specular Green</h5>
+
+            <input type="range" id="SB" name="SpecularBlue" min="0" max="1" step='.01' value='.5' />
+            <h5> Specular Blue</h5>
+
         </div>
+
         <div class="input-group">
-          <h3> Position </h3>
-            <p> X: </p> <input type="text" id="PX" value="-2.0"/>
-            <p> Y: </p> <input type="text" id="PY" value="2.0"/>
-            <p> Z: </p> <input type="text" id="PZ" value="5.0"/>
+
+            <input type="range" id="PX" name="ambientRed" min="-2" max="5" step='.1' value='5' />
+            <h5> Light Position X</h5>
+
+            <input type="range" id="PY" name="ambientGreen" min="0" max="1" step='.1' value='5' />
+            <h5> Light Position Y</h5>
+
+            <input type="range" id="PZ" name="ambientBlue" min="0" max="1" step='.1' value='5' />
+            <h5> Light Position Z</h5>
+
         </div>
     </div>
 

@@ -1,6 +1,6 @@
 // Project C by David Latimore
 // March 11th, 2019
-// Got my equations for Blinn-Phong and other light modes from wikipedia
+// Got my equations for Blinn-Phong and other light modes from wikipedia & codinglabs.net
 // Copied the make functions from starter code
 
 var VSHADER_SOURCE =
@@ -9,41 +9,39 @@ var VSHADER_SOURCE =
 
   'attribute vec4 a_Position;\n' +
   'attribute vec4 a_Color;\n' +
-  'attribute vec4 a_Normal;\n' +        // Normal
+  'attribute vec4 a_Normal;\n' +
 
   'uniform mat4 u_ViewMatrix;\n' +
   'uniform mat4 u_ProjMatrix;\n' +
-  'uniform mat4 u_ModelMatrix;\n' +    // Model matrix
-  'uniform mat4 u_NormalMatrix;\n' +   // Coordinate transformation matrix of the normal
+  'uniform mat4 u_ModelMatrix;\n' +
+  'uniform mat4 u_NormalMatrix;\n' +
 
   //Material uniforms
-  'uniform vec3 u_Ks;\n' +  //specular
-  'uniform vec3 u_Ke;\n' +  //emissive
-  'uniform vec3 u_Ka;\n' +  //ambience
-  'uniform vec3 u_Kd; \n' + //diffuse
-  'uniform int u_KShiny;\n' + //shinyness
+  'uniform vec3 u_spec;\n' +  //specular
+  'uniform vec3 u_emis;\n' +  //emissive
+  'uniform vec3 u_amb;\n' +  //ambience
+  'uniform vec3 u_diff; \n' + //diffuse
+  'uniform int u_shiny;\n' + //shinyness
 
-  'uniform vec3 u_HeadlightDiffuse;\n' +
-  'uniform vec3 u_HeadlightPosition;\n' +
-  'uniform vec3 u_HeadlightSpecular;\n' +
+  'uniform vec3 u_headlightDiff;\n' +
+  'uniform vec3 u_headlightPos;\n' +
+  'uniform vec3 u_headlightSpec;\n' +
 
-  'uniform vec3 u_LightPosition;\n' +
-  'uniform vec3 u_LightDirection;\n' +
-  'uniform vec3 u_AmbientLight;\n' +
-  'uniform vec3 u_LightDiffuse;\n' +
+  'uniform vec3 u_LightPos;\n' +
+  'uniform vec3 u_AmbLight;\n' +
+  'uniform vec3 u_lightDiff;\n' +
 
-'varying vec4 v_Color;\n' +
-'varying vec3 v_Normal;\n' +
-'varying vec3 v_Position;\n' +
-'varying vec3 v_Kd;\n' +
-
+  'varying vec4 v_Color;\n' +
+  'varying vec3 v_Normal;\n' +
+  'varying vec3 v_Position;\n' +
+  'varying vec3 v_diff;\n' +
 
  'void main() {\n' +
       'gl_Position = u_ProjMatrix * u_ViewMatrix * a_Position;\n' +
       'v_Position = vec3(u_ViewMatrix * a_Position);\n' +
       'v_Normal = normalize(vec3(u_NormalMatrix * a_Normal));\n' +
       'v_Color = a_Color;\n' +
-      'v_Kd = u_Kd; \n' +
+      'v_diff = u_diff; \n' +
 '}\n';
 
 var FSHADER_SOURCE =
@@ -53,28 +51,28 @@ var FSHADER_SOURCE =
   'varying vec4 v_Color;\n' +
   'varying vec3 v_Normal;\n' +
   'varying vec3 v_Position;\n' +
-  'varying vec3 v_Kd;\n' +
+  'varying vec3 v_diff;\n' +
 
   //Uniforms
   'uniform vec3 u_eyePosWorld; \n' +
 
   //Material uniforms
-  'uniform vec3 u_Ks;\n' +  //specular
-  'uniform vec3 u_Ke;\n' +  //emissive
-  'uniform vec3 u_Ka;\n' +  //ambience
-  'uniform vec3 u_Kd; \n' + //diffuse
-  'uniform int u_KShiny;\n' + //shinyness
+  'uniform vec3 u_spec;\n' +  //specular
+  'uniform vec3 u_emis;\n' +  //emissive
+  'uniform vec3 u_amb;\n' +  //ambience
+  'uniform vec3 u_diff; \n' + //diffuse
+  'uniform int u_shiny;\n' + //shinyness
 
   //Light uniforms
-  'uniform vec3 u_LightDiffuseColor;\n' +     // Diffuse Light color
-  'uniform vec3 u_LightPosition;\n' +  // Position of the light source
-  'uniform vec3 u_AmbientLight;\n' +   // Ambient light
+  'uniform vec3 u_lightDiffColor;\n' +     // Diffuse Light color
+  'uniform vec3 u_LightPos;\n' +  // Position of the light source
+  'uniform vec3 u_AmbLight;\n' +   // Ambient light
   'uniform vec3 u_Specular;\n' +
 
   //Headlight uniforms
-  'uniform vec3 u_HeadlightDiffuse;\n' +
-  'uniform vec3 u_HeadlightPosition;\n' +
-  'uniform vec3 u_HeadlightSpecular;\n' +
+  'uniform vec3 u_headlightDiff;\n' +
+  'uniform vec3 u_headlightPos;\n' +
+  'uniform vec3 u_headlightSpec;\n' +
 
   //Uniform to switch lighting modes
   'uniform int lightMode;\n' +
@@ -85,8 +83,8 @@ var FSHADER_SOURCE =
 'void main(){ \n' +
     'vec3 normal = normalize(v_Normal); \n' +
     'vec3 eyeDirection = normalize(u_eyePosWorld.xyz - v_Position); \n' +
-    'vec3 lightDirection = normalize(u_LightPosition - v_Position);\n' +
-    'vec3 hLightDirection = normalize(u_HeadlightPosition - v_Position);\n' +
+    'vec3 lightDirection = normalize(u_LightPos - v_Position);\n' +
+    'vec3 hLightDirection = normalize(u_headlightPos - v_Position);\n' +
 
     'float nDotL = max(dot(lightDirection, normal), 0.0); \n' +
     'float nDotHl = max(dot(hLightDirection, normal),0.0);\n' +
@@ -100,6 +98,7 @@ var FSHADER_SOURCE =
 	'float e16 = e08*e08; \n' +
 	'float e32 = e16*e16; \n' +
 	'float e64 = e32*e32; \n' +
+
     'vec3 emissive;\n' +
     'vec3 diffuse;\n' +
     'vec3 ambient;\n' +
@@ -107,29 +106,29 @@ var FSHADER_SOURCE =
     'vec3 hdiff;\n' +
     'vec3 hspec;\n' +
 
-    'float shineF = float(u_KShiny);\n' +
+    'float shineF = float(u_shiny);\n' +
 
-    'emissive = u_Ke;\n' +
-    'ambient = u_AmbientLight * u_Ka;\n' +
-    'specular = u_Specular * u_Ks * e32;\n' +
-    'diffuse = u_LightDiffuseColor * v_Kd * nDotL;\n' +
+    'emissive = u_emis;\n' +
+    'ambient = u_AmbLight * u_amb;\n' +
+    'specular = u_Specular * u_spec * e32;\n' +
+    'diffuse = u_lightDiffColor * v_diff * nDotL;\n' +
 
-    'hdiff = u_HeadlightDiffuse * v_Kd * nDotHl;\n' +
-    'hspec = u_HeadlightSpecular * u_Ks * e32;\n' +
+    'hdiff = u_headlightDiff * nDotHl * v_diff;\n' +
+    'hspec = u_headlightSpec * u_spec * u_headlightSpec * e32;\n' +
 
-    'vec4 fragWorld = vec4(emissive + diffuse + ambient + specular,1.0);\n' +
+    'vec4 fragWorld = vec4(emissive + diffuse + ambient + specular, 1.0); \n' +
     'vec4 fragHead = vec4(hdiff + hspec,1.0);\n' +
     'vec4 frag;\n' +
 
     //Blinn-Phong
     'if(lightMode==2){\n' +
-        'vec3 halfDirection = normalize(lightDirection);\n' +
-        'float ang = max(dot(halfDirection, normal),0.0);\n' +
+        'vec3 halfAngle = normalize(lightDirection);\n' +
+        'float ang = max(dot(halfAngle, normal),0.0);\n' +
         'float spec = pow(ang, shineF);\n' +
         'fragWorld = vec4((ambient + emissive + nDotL*diffuse+spec*specular),1.0);\n' +
 
-        'halfDirection = normalize(hLightDirection);\n' +
-        'ang = max(dot(halfDirection, normal),0.0);\n' +
+        'halfAngle = normalize(hLightDirection);\n' +
+        'ang = max(dot(halfAngle, normal),0.0);\n' +
         'spec = pow(ang, shineF);\n' +
 
         'fragHead = vec4((ambient + nDotHl*hdiff+spec*hspec),1.0);\n' +
@@ -137,22 +136,22 @@ var FSHADER_SOURCE =
 
     //Mode 3
     'if(lightMode == 3){\n' +
-        'specular = u_Specular * u_Ks * e02;\n' +
-        'hspec = u_HeadlightSpecular * u_Ks * e02;\n' +
+        'specular = u_Specular * u_spec * e02;\n' +
+        'hspec = u_headlightSpec * u_spec * e02;\n' +
         'fragWorld = vec4((emissive +ambient + nDotL*diffuse + nDotH*specular),1.0);\n' +
         'fragHead = vec4((ambient + nDotHl*hdiff+specular*hspec),1.0);\n' +
 
     '}\n' +
     //Mode 4
     'if(lightMode == 4){\n' +
-        'vec3 reflectionDirection = reflect(-lightDirection, normal);\n' +
-        'float temp = pow(max(dot(reflectionDirection, eyeDirection), 0.0), 0.0);\n' +
-        'vec3 spec = u_Specular * u_Ks * temp;\n' +
+        'vec3 reflectAngle = reflect(-lightDirection, normal);\n' +
+        'float temp = pow(max(dot(reflectAngle, eyeDirection), 0.0), 0.0);\n' +
+        'vec3 spec = u_Specular * u_spec * temp;\n' +
         'fragWorld = vec4((ambient + spec + diffuse*nDotL + emissive), 1.0);\n' +
 
-        'reflectionDirection = reflect(-hLightDirection, normal);\n' +
-        'temp = pow(max(dot(reflectionDirection, eyeDirection), 0.0), 0.0);\n' +
-        'hspec = u_HeadlightSpecular * u_Ks * temp;\n' +
+        'reflectAngle = reflect(-hLightDirection, normal);\n' +
+        'temp = pow(max(dot(reflectAngle, eyeDirection), 0.0), 0.0);\n' +
+        'hspec = u_headlightSpec * u_spec * temp;\n' +
         'fragHead = vec4((ambient + hspec + hdiff*nDotHl*e64), 1.0);\n' +
 
    '}\n' +
@@ -188,7 +187,7 @@ var g = 1;
 var b = 1;
 
 var g_EyeX = 0, g_EyeY = 3.0, g_EyeZ = 3.00;
-var g_AtX = 0.0, g_AtY = 0.0, g_AtZ = 0.0;
+var g_LookAtX = 0.0, g_LookAtY = 0.0, g_LookAtZ = 0.0;
 
 var theta = 0;
 
@@ -201,19 +200,19 @@ var u_ModelMatrix = false;
 var u_ViewMatrix = false;
 var u_ProjMatrix = false;
 var u_NormalMatrix = false;
-var u_HeadlightPosition;
-var u_HeadlightDiffuse;
-var u_HeadlightSpecular;
-var u_LightDiffuseColor;
-var u_LightPosition;
-var u_AmbientLight;
+var u_headlightPos;
+var u_lightDiffColor;
+var u_LightPos;
+var u_AmbLight;
+var u_amb;
+var u_diff;
+var u_shiny;
+var u_headlightDiff;
+var u_headlightSpec;
 var u_Specular;
 var u_EyePosWorld;
-var u_Ke;
-var u_Ks;
-var u_Ka;
-var u_Kd;
-var u_KShiny;
+var u_emis;
+var u_spec;
 
 var viewMatrix = new Matrix4();
 var projMatrix = new Matrix4();
@@ -227,18 +226,18 @@ var hlOn;
 var wLOn;
 
 //Variables for user adjusted aspects of world lights
-var usrAmbiR = 0.7;
-var usrAmbiG = 0.7;
-var usrAmbiB = 0.7;
-var usrDiffR = 0.4;
-var usrDiffG = 0.6;
-var usrDiffB = 0.6;
-var usrSpecR = 0.9;
-var usrSpecG = 0.9;
-var usrSpecB = 1.0;
-var usrPosX = -4.0;
-var usrPosY = 2.0;
-var usrPosZ = 5.0;
+var userAmbientRed = 0.7;
+var userAmbientGreen = 0.7;
+var userAmbientBlue = 0.7;
+var userDiffuseRed = 0.4;
+var userDiffuseGreen = 0.6;
+var userDiffuseBlue = 0.6;
+var userSpecularRed = 0.9;
+var userSpecularGreen = 0.9;
+var userSpecularBlue = 1.0;
+var userPositionX = -4.0;
+var userPositionY = 2.0;
+var userPositionZ = 5.0;
 
 var currentAngle;
 var ANGLE_STEP = 25.0;
@@ -295,29 +294,29 @@ function main() {
     u_LightMode = gl.getUniformLocation(gl.program, 'lightMode');
 
 
-    u_HeadlightDiffuse = gl.getUniformLocation(gl.program, 'u_HeadlightDiffuse');
-    u_HeadlightPosition = gl.getUniformLocation(gl.program, 'u_HeadlightPosition');
-    u_HeadlightSpecular = gl.getUniformLocation(gl.program, 'u_HeadlightSpecular');
-    u_LightDiffuseColor = gl.getUniformLocation(gl.program, 'u_LightDiffuseColor');
-    u_LightPosition = gl.getUniformLocation(gl.program, 'u_LightPosition');
-    u_AmbientLight = gl.getUniformLocation(gl.program, 'u_AmbientLight');
+    u_headlightDiff = gl.getUniformLocation(gl.program, 'u_headlightDiff');
+    u_headlightPos = gl.getUniformLocation(gl.program, 'u_headlightPos');
+    u_headlightSpec = gl.getUniformLocation(gl.program, 'u_headlightSpec');
+    u_lightDiffColor = gl.getUniformLocation(gl.program, 'u_lightDiffColor');
+    u_LightPos = gl.getUniformLocation(gl.program, 'u_LightPos');
+    u_AmbLight = gl.getUniformLocation(gl.program, 'u_AmbLight');
     u_Specular = gl.getUniformLocation(gl.program, 'u_Specular');
     wLOn = gl.getUniformLocation(gl.program, 'worldLightOn');
     hlOn = gl.getUniformLocation(gl.program, 'headlightOn');
 
-    u_Ke = gl.getUniformLocation(gl.program, 'u_Ke');
-    u_Ks = gl.getUniformLocation(gl.program, 'u_Ks');
-    u_Ka = gl.getUniformLocation(gl.program, 'u_Ka');
-    u_Kd = gl.getUniformLocation(gl.program, 'u_Kd');
-    u_KShiny = gl.getUniformLocation(gl.program, 'u_KShiny');
-    gl.uniform3f(u_Ks, 1.0, 1.0, 1.0);
-    gl.uniform3f(u_Ka, 0.6, 0.3, 0.3);
-    gl.uniform3f(u_Kd, 0.3, 0.3, 0.3);
+    u_emis = gl.getUniformLocation(gl.program, 'u_emis');
+    u_spec = gl.getUniformLocation(gl.program, 'u_spec');
+    u_amb = gl.getUniformLocation(gl.program, 'u_amb');
+    u_diff = gl.getUniformLocation(gl.program, 'u_diff');
+    u_shiny = gl.getUniformLocation(gl.program, 'u_shiny');
+    gl.uniform3f(u_spec, 1.0, 1.0, 1.0);
+    gl.uniform3f(u_amb, 0.6, 0.3, 0.3);
+    gl.uniform3f(u_diff, 0.3, 0.3, 0.3);
 
 
 
-    gl.uniform3f(u_HeadlightDiffuse, 1.0, 1.0, 1.0);
-    gl.uniform3f(u_HeadlightSpecular, 1.0, 1.0, 1.0);
+    gl.uniform3f(u_headlightDiff, 1.0, 1.0, 1.0);
+    gl.uniform3f(u_headlightSpec, 1.0, 1.0, 1.0);
     gl.uniform1i(wLOn, 1);
     gl.uniform1i(hlOn, 1);
     gl.uniform1i(u_LightMode, lMode);
@@ -327,7 +326,7 @@ function main() {
 
     var tick = function () {
         canvas.width = innerWidth;
-        canvas.height = innerHeight *0.75;
+        canvas.height = innerHeight * 0.75;
         gl.uniform1i(u_LightMode, lMode);
         userValues();
         gl.uniform3f(u_eyePosWorld, g_EyeX, g_EyeY, g_EyeZ);
@@ -345,8 +344,8 @@ function makeGroundGrid() {
     // Create a list of vertices that create a large grid of lines in the x,y plane
     // centered at x=y=z=0.  Draw this shape using the GL_LINES primitive.
 
-    var xcount = 200;     // # of lines to draw in x,y to make the grid.
-    var ycount = 200;
+    var xcount = 100;     // # of lines to draw in x,y to make the grid.
+    var ycount = 100;
     var xymax = 80.0;     // grid size; extends to cover +/-xymax in x and y.
     var xColr = Math.random()*0.5;
     var yColr = Math.random() * 0.5;
@@ -565,8 +564,8 @@ function makeCube() {
 
 function initVertexBuffers(gl) {
     makeGroundGrid();
-    makeSphere();
     makeTetrahedron();
+    makeSphere();
     makeCube();
 
     mySize = gndVerts.length + sphVerts.length + tetVerts.length + cubVerts.length;
@@ -637,7 +636,7 @@ function draw() {
     //Set the lights
     if (headlightOn) {
         //Set the position of headlight and uniform
-        gl.uniform3f(u_HeadlightPosition, g_EyeX, g_EyeY, g_EyeZ);
+        gl.uniform3f(u_headlightPos, g_EyeX, g_EyeY, g_EyeZ);
         gl.uniform1i(hlOn, 1);
     }
     else {
@@ -646,17 +645,17 @@ function draw() {
 
     if (worldLightOn) {
         gl.uniform1i(wLOn, 1);
-        gl.uniform3f(u_AmbientLight, usrAmbiR, usrAmbiG, usrAmbiB);
-        gl.uniform3f(u_LightDiffuseColor, usrDiffR, usrDiffG, usrDiffB);
-        gl.uniform3f(u_Specular, usrSpecR, usrSpecG, usrSpecB);
-        gl.uniform3f(u_LightPosition, usrPosX, usrPosY, usrPosZ);
+        gl.uniform3f(u_AmbLight, userAmbientRed, userAmbientGreen, userAmbientBlue);
+        gl.uniform3f(u_lightDiffColor, userDiffuseRed, userDiffuseGreen, userDiffuseBlue);
+        gl.uniform3f(u_Specular, userSpecularRed, userSpecularGreen, userSpecularBlue);
+        gl.uniform3f(u_LightPos, userPositionX, userPositionY, userPositionZ);
     }
     else {
         gl.uniform1i(wLOn, 0);
-        gl.uniform3f(u_AmbientLight, 0,0,0);
-        gl.uniform3f(u_LightDiffuseColor, 0,0,0);
+        gl.uniform3f(u_AmbLight, 0,0,0);
+        gl.uniform3f(u_lightDiffColor, 0,0,0);
         gl.uniform3f(u_Specular, 0,0,0);
-        gl.uniform3f(u_LightPosition, 0,0,0);
+        gl.uniform3f(u_LightPos, 0,0,0);
     }
 
     //projMatrix.setPerspective(40, 1, 1, 100);
@@ -692,14 +691,14 @@ function draw() {
 
     // but use a different 'view' matrix:
     viewMatrix.setLookAt(g_EyeX, g_EyeY, g_EyeZ, // eye position
-                        g_AtX, g_AtY, g_AtZ,                  // look-at point
+                        g_LookAtX, g_LookAtY, g_LookAtZ,                  // look-at point
                         0, 0, 1);                 // up vector
 
 
 
     // Pass the view projection matrix to our shaders:
     gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix.elements);
-    gl.uniform3f(u_HeadlightPosition, g_EyeX, g_EyeY, g_EyeZ);
+    gl.uniform3f(u_headlightPos, g_EyeX, g_EyeY, g_EyeZ);
 
 
     drawMyScene();
@@ -715,10 +714,10 @@ function drawMyScene() {
     pushMatrix(viewMatrix);
 
     // Ground Grid lights/colors
-    gl.uniform3f(u_Ke, 0.0, 0.0, 0.0);
-    gl.uniform3f(u_Ka, 0.2, 0.2, 0.2);
-    gl.uniform3f(u_Kd, .365, .933, .733);
-    gl.uniform3f(u_Ks, 0.5, 0.5, 0.5);
+    gl.uniform3f(u_emis, 0.0, 0.0, 0.0);
+    gl.uniform3f(u_amb, 0.2, 0.2, 0.2);
+    gl.uniform3f(u_diff, .365, .933, .733);
+    gl.uniform3f(u_spec, 0.5, 0.5, 0.5);
 
     normalMatrix.setInverseOf(viewMatrix);
     normalMatrix.transpose();
@@ -742,10 +741,10 @@ function drawMyScene() {
     gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
 
     // Material stuff for blue moon
-    gl.uniform3f(u_Ke, 0.0, 0.0, 0.0);
-    gl.uniform3f(u_Ka, 0.05, 0.05, 0.05);
-    gl.uniform3f(u_Kd, .062, .753, 1); // BLUEFACEEEEEEEE BABYYYYYYYYY
-    gl.uniform3f(u_Ks, 0.1, 0.2, 0.3);
+    gl.uniform3f(u_emis, 0.0, 0.0, 0.0);
+    gl.uniform3f(u_amb, 0.05, 0.05, 0.05);
+    gl.uniform3f(u_diff, .062, .753, 1); // BLUEFACEEEEEEEE BABYYYYYYYYY
+    gl.uniform3f(u_spec, 0.1, 0.2, 0.3);
     gl.drawArrays(gl.TRIANGLE_STRIP, sphereStart / floatsPerVertex, sphVerts.length / floatsPerVertex);
 
     // Pink Submoon
@@ -764,10 +763,10 @@ function drawMyScene() {
     gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
 
     // Lights / colors for pink submoon
-    gl.uniform3f(u_Ke, 0.0, 0.0, 0.0);
-    gl.uniform3f(u_Ka, 0.33, 0.22, 0.03);
-    gl.uniform3f(u_Kd, 1.0, .68, .84);
-    gl.uniform3f(u_Ks, 0.99, 0.94, 0.81);
+    gl.uniform3f(u_emis, 0.0, 0.0, 0.0);
+    gl.uniform3f(u_amb, 0.33, 0.22, 0.03);
+    gl.uniform3f(u_diff, 1.0, .68, .84);
+    gl.uniform3f(u_spec, 0.99, 0.94, 0.81);
     gl.drawArrays(gl.TRIANGLE_STRIP, sphereStart / floatsPerVertex, sphVerts.length / floatsPerVertex);
 
     // Teal submoon
@@ -783,10 +782,10 @@ function drawMyScene() {
     gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
 
     // Lights / colors for pink submoon
-    gl.uniform3f(u_Ke, 0.0, 0.0, 0.0);
-    gl.uniform3f(u_Ka, 0.11, 0.06, 0.11);
-    gl.uniform3f(u_Kd, .365, .833, .633);
-    gl.uniform3f(u_Ks, 0.33, 0.33, 0.52);
+    gl.uniform3f(u_emis, 0.0, 0.0, 0.0);
+    gl.uniform3f(u_amb, 0.11, 0.06, 0.11);
+    gl.uniform3f(u_diff, .365, .833, .633);
+    gl.uniform3f(u_spec, 0.33, 0.33, 0.52);
     gl.drawArrays(gl.TRIANGLE_STRIP, sphereStart / floatsPerVertex, sphVerts.length / floatsPerVertex);
 
 
@@ -802,11 +801,11 @@ function drawMyScene() {
     gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
 
     // <<<       ▲▲▲       >>>       LIGHTS AND COLORS        <<<       ▲▲▲       >>>
-    gl.uniform3f(u_Ke, 0.0, 0.0, 0.0);
-    gl.uniform3f(u_Ka, 0.02, 0.17, 0.03);
-    gl.uniform3f(u_Kd, .365, .933, .733);
-    gl.uniform3f(u_Ks, 0.633, 0.73, 0.633);
-    gl.uniform1i(u_KShiny, 76.8);
+    gl.uniform3f(u_emis, 0.0, 0.0, 0.0);
+    gl.uniform3f(u_amb, 0.02, 0.17, 0.03);
+    gl.uniform3f(u_diff, .365, .933, .733);
+    gl.uniform3f(u_spec, 0.633, 0.73, 0.633);
+    gl.uniform1i(u_shiny, 76.8);
     gl.drawArrays(gl.TRIANGLES, tetrahedronStart / floatsPerVertex, tetVerts.length / floatsPerVertex);
 
 
@@ -825,11 +824,11 @@ function drawMyScene() {
     gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
 
     // RED TETRA
-    gl.uniform3f(u_Ke, 0.0, 0.0, 0.0);
-    gl.uniform3f(u_Ka, 0.05375, 0.05, 0.06625);
-    gl.uniform3f(u_Kd, 1.0, .274, .274);
-    gl.uniform3f(u_Ks, 0.332741, 0.328634, 0.346435);
-    gl.uniform1i(u_KShiny, 38.4);
+    gl.uniform3f(u_emis, 0.0, 0.0, 0.0);
+    gl.uniform3f(u_amb, 0.05375, 0.05, 0.06625);
+    gl.uniform3f(u_diff, 1.0, .274, .274);
+    gl.uniform3f(u_spec, 0.332741, 0.328634, 0.346435);
+    gl.uniform1i(u_shiny, 38.4);
     gl.drawArrays(gl.TRIANGLES, tetrahedronStart / floatsPerVertex, tetVerts.length / floatsPerVertex);
 
     // YELLOW DIAMOND 1
@@ -844,11 +843,11 @@ function drawMyScene() {
     gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
 
     // LIGHTS / COLORS FOR YELLOW DIAMOND 1
-    gl.uniform3f(u_Ke, 0.0, 0.0, 0.0);
-    gl.uniform3f(u_Ka, 0.0215, 0.1745, 0.0215);
-    gl.uniform3f(u_Kd, 1.0, .824, .265);
-    gl.uniform3f(u_Ks, 0.633, 0.727811, 0.633);
-    gl.uniform1i(u_KShiny, 76.8);
+    gl.uniform3f(u_emis, 0.0, 0.0, 0.0);
+    gl.uniform3f(u_amb, 0.0215, 0.1745, 0.0215);
+    gl.uniform3f(u_diff, 1.0, .824, .265);
+    gl.uniform3f(u_spec, 0.633, 0.727811, 0.633);
+    gl.uniform1i(u_shiny, 76.8);
     gl.drawArrays(gl.TRIANGLES, tetrahedronStart / floatsPerVertex, tetVerts.length / floatsPerVertex);
 
     // YELLOW DIAMOND 2
@@ -863,11 +862,11 @@ function drawMyScene() {
     gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
 
     // LIGHTS / COLORS FOR YELLOW DIAMOND 2
-    gl.uniform3f(u_Ke, 0.0, 0.0, 0.0);
-    gl.uniform3f(u_Ka, 0.25, 0.25, 0.25);
-    gl.uniform3f(u_Kd, 1.0, .824, .265);
-    gl.uniform3f(u_Ks, 0.77, 0.77, 0.77);
-    gl.uniform1i(u_KShiny, 76.8);
+    gl.uniform3f(u_emis, 0.0, 0.0, 0.0);
+    gl.uniform3f(u_amb, 0.25, 0.25, 0.25);
+    gl.uniform3f(u_diff, 1.0, .824, .265);
+    gl.uniform3f(u_spec, 0.77, 0.77, 0.77);
+    gl.uniform1i(u_shiny, 76.8);
     gl.drawArrays(gl.TRIANGLES, tetrahedronStart / floatsPerVertex, tetVerts.length / floatsPerVertex);
 
     // YELLOW DIAMOND 3
@@ -882,11 +881,11 @@ function drawMyScene() {
     gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
 
     // LIGHTS / COLORS FOR YELLOW DIAMONDS TETRA 3
-    gl.uniform3f(u_Ke, 0.0, 0.0, 0.0);
-    gl.uniform3f(u_Ka, 0.25, 0.25, 0.25);
-    gl.uniform3f(u_Kd, 1.0, .824, .265);
-    gl.uniform3f(u_Ks, 0.77, 0.77, 0.77);
-    gl.uniform1i(u_KShiny, 76.8);
+    gl.uniform3f(u_emis, 0.0, 0.0, 0.0);
+    gl.uniform3f(u_amb, 0.25, 0.25, 0.25);
+    gl.uniform3f(u_diff, 1.0, .824, .265);
+    gl.uniform3f(u_spec, 0.77, 0.77, 0.77);
+    gl.uniform1i(u_shiny, 76.8);
     gl.drawArrays(gl.TRIANGLES, tetrahedronStart / floatsPerVertex, tetVerts.length / floatsPerVertex);
 
     // BIG ASS SUN
@@ -902,11 +901,11 @@ function drawMyScene() {
     gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
 
     // LIGHTS / COLORS FOR BIG ASS SUN
-    gl.uniform3f(u_Ke, 0.0, 0.0, 0.0);
-    gl.uniform3f(u_Ka, 0.25, 0.22, 0.06);
-    gl.uniform3f(u_Kd, 1.0, .65, .265);
-    gl.uniform3f(u_Ks, 0.8, 0.72, 0.21);
-    gl.uniform1i(u_KShiny, 83.2);
+    gl.uniform3f(u_emis, 0.0, 0.0, 0.0);
+    gl.uniform3f(u_amb, 0.25, 0.22, 0.06);
+    gl.uniform3f(u_diff, 1.0, .65, .265);
+    gl.uniform3f(u_spec, 0.8, 0.72, 0.21);
+    gl.uniform1i(u_shiny, 83.2);
     gl.drawArrays(gl.TRIANGLE_STRIP, sphereStart / floatsPerVertex, sphVerts.length / floatsPerVertex);
 
     // SNOWMAN BASE
@@ -924,11 +923,11 @@ function drawMyScene() {
     gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
 
     // LIGHTS / COLORS FOR SNOWMAN BASE
-    gl.uniform3f(u_Ke, 0.0, 0.0, 0.0);
-    gl.uniform3f(u_Ka, 0.02, 0.17, 0.02);
-    gl.uniform3f(u_Kd, 1.0, 1.0, 1.0);
-    gl.uniform3f(u_Ks, 0.633, 0.73, 0.633);
-    gl.uniform1i(u_KShiny, 76.8);
+    gl.uniform3f(u_emis, 0.0, 0.0, 0.0);
+    gl.uniform3f(u_amb, 0.02, 0.17, 0.02);
+    gl.uniform3f(u_diff, 1.0, 1.0, 1.0);
+    gl.uniform3f(u_spec, 0.633, 0.73, 0.633);
+    gl.uniform1i(u_shiny, 76.8);
     gl.drawArrays(gl.TRIANGLE_STRIP, sphereStart / floatsPerVertex, sphVerts.length / floatsPerVertex);
 
 
@@ -946,11 +945,11 @@ function drawMyScene() {
     gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
 
     // LIGHTS / COLORS FOR MIDDLE SNOWMAN SPHERE
-    gl.uniform3f(u_Ke, 0.0, 0.0, 0.0);
-    gl.uniform3f(u_Ka, 0.1, 0.18725, 0.1745);
-    gl.uniform3f(u_Kd, 1, 1.0, 1.0);
-    gl.uniform3f(u_Ks, 0.3, 0.3, 0.3);
-    gl.uniform1i(u_KShiny, 12.8);
+    gl.uniform3f(u_emis, 0.0, 0.0, 0.0);
+    gl.uniform3f(u_amb, 0.1, 0.18725, 0.1745);
+    gl.uniform3f(u_diff, 1, 1.0, 1.0);
+    gl.uniform3f(u_spec, 0.3, 0.3, 0.3);
+    gl.uniform1i(u_shiny, 12.8);
     gl.drawArrays(gl.TRIANGLE_STRIP, sphereStart / floatsPerVertex, sphVerts.length / floatsPerVertex);
 
     // SNOWMAN HEAD
@@ -966,11 +965,11 @@ function drawMyScene() {
     gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
 
     // LIGHTS / COLORS FOR SNOWMAN HEAD
-    gl.uniform3f(u_Ke, 0.0, 0.0, 0.0);
-    gl.uniform3f(u_Ka, 0.17, 0.01, 0.01);
-    gl.uniform3f(u_Kd, 1.0, 1.0, 1.0, 1.0);
-    gl.uniform3f(u_Ks, 0.73, 0.63, 0.63);
-    gl.uniform1i(u_KShiny, 76.8);
+    gl.uniform3f(u_emis, 0.0, 0.0, 0.0);
+    gl.uniform3f(u_amb, 0.17, 0.01, 0.01);
+    gl.uniform3f(u_diff, 1.0, 1.0, 1.0, 1.0);
+    gl.uniform3f(u_spec, 0.73, 0.63, 0.63);
+    gl.uniform1i(u_shiny, 76.8);
     gl.drawArrays(gl.TRIANGLE_STRIP, sphereStart / floatsPerVertex, sphVerts.length / floatsPerVertex);
 
 
@@ -987,11 +986,11 @@ function drawMyScene() {
     gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
 
     // LIGHTS / COLORS FOR BOX ONE
-    gl.uniform3f(u_Ke, 0.0, 0.0, 0.0);
-    gl.uniform3f(u_Ka, 0.18, 0.05, 0.05);
-    gl.uniform3f(u_Kd, .062, .753, 1);
-    gl.uniform3f(u_Ks, 0.73, 0.63, 0.63);
-    gl.uniform1i(u_KShiny, 76.8);
+    gl.uniform3f(u_emis, 0.0, 0.0, 0.0);
+    gl.uniform3f(u_amb, 0.18, 0.05, 0.05);
+    gl.uniform3f(u_diff, .062, .753, 1);
+    gl.uniform3f(u_spec, 0.73, 0.63, 0.63);
+    gl.uniform1i(u_shiny, 76.8);
     gl.drawArrays(gl.TRIANGLES, cubeStart / floatsPerVertex, cubVerts.length / floatsPerVertex);
 
     // BOX TWO
@@ -1007,52 +1006,53 @@ function drawMyScene() {
     gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
 
     // LIGHTS / COLORS FOR BOX TWO
-    gl.uniform3f(u_Ke, 0.0, 0.0, 0.0);
-    gl.uniform3f(u_Ka, 0.18, 0.05, 0.05);
-    gl.uniform3f(u_Kd, .062, .753, 1);
-    gl.uniform3f(u_Ks, 0.73, 0.63, 0.63);
-    gl.uniform1i(u_KShiny, 76.8);
+    gl.uniform3f(u_emis, 0.0, 0.0, 0.0);
+    gl.uniform3f(u_amb, 0.18, 0.05, 0.05);
+    gl.uniform3f(u_diff, .062, .753, 1);
+    gl.uniform3f(u_spec, 0.23, 0.63, 0.23);
+    gl.uniform1i(u_shiny, 76.8);
     gl.drawArrays(gl.TRIANGLES, cubeStart / floatsPerVertex, cubVerts.length / floatsPerVertex);
 }
 
 function myKeyDown(ev) {
     //===============================================================================
-    var xd = g_EyeX - g_AtX;
-    var yd = g_EyeY - g_AtY;
-    var zd = g_EyeZ - g_AtZ;
+    var xd = g_EyeX - g_LookAtX;
+    var yd = g_EyeY - g_LookAtY;
+    var zd = g_EyeZ - g_LookAtZ;
 
     var lxy = Math.sqrt(xd * xd + yd * yd);
-
     var l = Math.sqrt(xd * xd + yd * yd + zd * zd);
-
 
     switch (ev.keyCode) {      // keycodes !=ASCII, but are very consistent for
         //  nearly all non-alphanumeric keys for nearly all keyboards in all countries.
-        case 37: // LEFT ARROW
+        case 74: // J
             if (flag == -1) theta = -Math.acos(xd / lxy) + 0.1;
             else theta = theta + 0.1;
-            g_AtX = g_EyeX + lxy * Math.cos(theta);
-            g_AtY = g_EyeY + lxy * Math.sin(theta);
+            g_LookAtX = g_EyeX + lxy * Math.cos(theta);
+            g_LookAtY = g_EyeY + lxy * Math.sin(theta);
             flag = 1;
             break;
-        case 38: // UP ARROW
-            g_AtZ = g_AtZ + 0.1;
+
+        case 73: // I
+            g_LookAtZ = g_LookAtZ + 0.1;
             break;
-        case 39: // RIGHT ARROW
+
+        case 76: // L
             if (flag == -1) theta = -Math.acos(xd / lxy) - 0.1;
             else theta = theta - 0.1;
-            g_AtX = g_EyeX + lxy * Math.cos(theta);
-            g_AtY = g_EyeY + lxy * Math.sin(theta);
+            g_LookAtX = g_EyeX + lxy * Math.cos(theta);
+            g_LookAtY = g_EyeY + lxy * Math.sin(theta);
             flag = 1;
             break;
-        case 40: // DOWN ARROW
-            g_AtZ = g_AtZ - 0.1;
+
+        case 75: // K
+            g_LookAtZ = g_LookAtZ - 0.1;
             break;
 
         case 87: // W
-            g_AtX = g_AtX - 0.1 * (xd / l);
-            g_AtY = g_AtY - 0.1 * (yd / l);
-            g_AtZ = g_AtZ - 0.1 * (zd / l);
+            g_LookAtX = g_LookAtX - 0.1 * (xd / l);
+            g_LookAtY = g_LookAtY - 0.1 * (yd / l);
+            g_LookAtZ = g_LookAtZ - 0.1 * (zd / l);
 
             g_EyeX = g_EyeX - 0.1 * (xd / l);
             g_EyeY = g_EyeY - 0.1 * (yd / l);
@@ -1060,9 +1060,9 @@ function myKeyDown(ev) {
             break;
 
         case 83: // S
-            g_AtX = g_AtX + 0.1 * (xd / l);
-            g_AtY = g_AtY + 0.1 * (yd / l);
-            g_AtZ = g_AtZ + 0.1 * (zd / l);
+            g_LookAtX = g_LookAtX + 0.1 * (xd / l);
+            g_LookAtY = g_LookAtY + 0.1 * (yd / l);
+            g_LookAtZ = g_LookAtZ + 0.1 * (zd / l);
 
             g_EyeX = g_EyeX + 0.1 * (xd / l);
             g_EyeY = g_EyeY + 0.1 * (yd / l);
@@ -1073,48 +1073,34 @@ function myKeyDown(ev) {
         case 68: // A
             g_EyeX = g_EyeX - 0.1 * yd / lxy;
             g_EyeY = g_EyeY + 0.1 * xd / lxy;
-            g_AtX -= 0.1 * yd / lxy;
-            g_AtY += 0.1 * xd / lxy;
+            g_LookAtX -= 0.1 * yd / lxy;
+            g_LookAtY += 0.1 * xd / lxy;
 
             break;
         case 65: // D
             g_EyeX = g_EyeX + 0.1 * yd / lxy;
             g_EyeY = g_EyeY - 0.1 * xd / lxy;
-            g_AtX += 0.1 * yd / lxy;
-            g_AtY -= 0.1 * xd / lxy;
-
+            g_LookAtX += 0.1 * yd / lxy;
+            g_LookAtY -= 0.1 * xd / lxy;
             break;
+
         case 72: // H
-            if (headlightOn)
-                headlightOn = false;
-            else
-                headlightOn = true;
+            headlightOn = !headlightOn;
             break;
 
         case 71: // G
-            if (worldLightOn)
-                worldLightOn = false;
-            else
-                worldLightOn = true;
+            worldLightOn = !worldLightOn;
             break;
 
-        case 49: // 1
-            lMode = 1;
+
+        case 37: // Left arrows
+
+            lMode = (lMode == 1) ? 4 : lMode - 1;
             document.getElementById("lMode").innerHTML = "Light Mode: " + lMode;
             break;
 
-        case 50: // 2
-            lMode = 2;
-            document.getElementById("lMode").innerHTML = "Light Mode: " + lMode;
-            break;
-
-        case 51: // 3
-            lMode = 3;
-            document.getElementById("lMode").innerHTML = "Light Mode: " + lMode;
-            break;
-
-        case 52: // 4
-            lMode = 4;
+        case 39: // Right arrows
+            lMode = (lMode == 4) ? 1 : lMode + 1;
             document.getElementById("lMode").innerHTML = "Light Mode: " + lMode;
             break;
     }
@@ -1152,67 +1138,22 @@ function animateEverything() {
     treeAngle = newAngle %= 360;
 }
 
+const userValues2 = (id, corresp) => {
+  const val = document.getElementById(id).value;
+  return isNaN(val) ? corresp : val;
+}
+
 function userValues() {
-    var ar = document.getElementById("AR").value;
-    if (isNaN(ar))
-    {
-        ar = usrAmbiR
-        }
-    var ag = document.getElementById("AG").value;
-    if (isNaN(ag))
-    {
-        ag = usrAmbiG;
-    }
-    var ab = document.getElementById("AB").value;
-    if (isNaN(ab)) {
-        ab = usrAmbiB
-    }
-    var dr = document.getElementById("DR").value;
-    if (isNaN(dr)) {
-        dr = usrDiffR;
-    }
-    var dg = document.getElementById("DG").value;
-    if (isNaN(dg)) {
-        dg = usrDiffG;
-    }
-    var db = document.getElementById("DB").value;
-    if (isNaN(db)) {
-        db = usrDiffB;
-    }
-    var sr = document.getElementById("SR").value;
-    if (isNaN(sr)) {
-        sr = usrSpecR;
-    }
-    var sg = document.getElementById("SG").value;
-    if (isNaN(sg)) {
-        sg = usrSpecG;
-    }
-    var sb = document.getElementById("SB").value;
-    if (isNaN(sb)) {
-        sb = usrSpecB;
-    }
-    var px = document.getElementById("PX").value;
-    if (isNaN(px)) {
-        px = usrPosX;
-    }
-    var py = document.getElementById("PY").value;
-    if (isNaN(py)) {
-        py = usrPosY;
-    }
-    var pz = document.getElementById("PZ").value;
-    if (isNaN(pz)) {
-        pz = usrPosZ;
-    }
-    usrAmbiR = ar;
-    usrAmbiG = ag;
-    usrAmbiB = ab;
-    usrDiffR = dr;
-    usrDiffG = dg;
-    usrDiffB = db;
-    usrSpecR = sr;
-    usrSpecG = sg;
-    usrSpecB = sb;
-    usrPosX =  px;
-    usrPosY = py;
-    usrPosZ = pz;
+  userAmbientRed = userValues2('AR', userAmbientRed);
+  userAmbientGreen = userValues2('AG', userAmbientGreen);
+  userAmbientBlue = userValues2('AB', userAmbientBlue);
+  userDiffuseRed = userValues2('DR', userDiffuseRed);
+  userDiffuseGreen = userValues2('DG', userDiffuseGreen);
+  userDiffuseBlue = userValues2('DB', userDiffuseBlue);
+  userSpecularRed = userValues2('SR', userSpecularRed);
+  userSpecularGreen = userValues2('SG', userSpecularGreen);
+  userSpecularBlue = userValues2('SB', userSpecularBlue);
+  userPositionX = userValues2('PX', userPositionX);
+  userPositionY = userValues2('PY', userPositionY);
+  userPositionZ = userValues2('PZ', userPositionZ);
 }
